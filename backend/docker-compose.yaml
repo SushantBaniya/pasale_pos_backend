@@ -1,0 +1,27 @@
+version : '3.8'
+
+services:
+  daphne:
+    build: . # uses docker file to build the image
+    container_name: pasale_daphne
+    restart: always
+    command: daphne -b 0.0.0.0 -p 8000 backend.asgi:application
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:latest # uses the latest version of redis image from docker hub instead of building it from a docker file
+    container_name: pasale_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+
+volumes:
+  redis_data:
