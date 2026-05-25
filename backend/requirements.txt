@@ -1,0 +1,16 @@
+django
+django-cors-headers
+djangorestframework
+djangorestframework-simplejwt
+drf-spectacular
+psycopg2-binary
+python-dotenv
+python-decouple
+celery
+redis
+django-redis
+django-extensions
+django-q
+pandas
+mlxtend
+urllib3

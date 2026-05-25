@@ -1,0 +1,1494 @@
+# Pasale Backend REST API Documentation
+
+## API Overview
+
+- Base URL: /api
+- Auth scheme: JWT Bearer token for protected endpoints
+- Auth header format: Authorization: Bearer <access_token>
+- Content type: application/json
+
+## Authentication Endpoints
+
+### 1) Signup
+
+#### Endpoint
+
+/api/signup/
+
+#### Method
+
+POST
+
+#### Auth
+
+No
+
+#### Request Body
+
+| Field         | Type   | Required | Notes                                         |
+| ------------- | ------ | -------- | --------------------------------------------- |
+| username      | string | Yes      | Must be unique unless reusing same email flow |
+| email         | string | Yes      | Lowercased by server                          |
+| password      | string | Yes      | Plain text in request                         |
+| phone_no      | string | No       | Saved to business profile                     |
+| business_name | string | No       | Business name for created/updated business    |
+
+#### Responses
+
+| Status | Response                                                                             |
+| ------ | ------------------------------------------------------------------------------------ |
+| 201    | {"message": "User created successfully. Please verify the OTP sent to your email."}  |
+| 400    | {"error": "Username, email and password are required."}                              |
+| 400    | {"error": "User with this email already exists."}                                    |
+| 400    | {"error": "Username is already taken."}                                              |
+| 400    | {"error": "Username or email already exists."}                                       |
+| 503    | {"error": "Account created, but OTP delivery failed. Please try again in a moment."} |
+
+### 2) Verify Signup OTP
+
+#### Endpoint
+
+/api/verify-signup-otp/
+
+#### Method
+
+POST
+
+#### Auth
+
+No
+
+#### Request Body
+
+| Field | Type   | Required | Notes                   |
+| ----- | ------ | -------- | ----------------------- |
+| email | string | Yes      | Must match signup email |
+| otp   | string | Yes      | 6-digit OTP             |
+
+#### Responses
+
+| Status | Response                                         |
+| ------ | ------------------------------------------------ |
+| 200    | {"message": "Signup OTP verified successfully!"} |
+| 400    | {"error": "No OTP found"}                        |
+| 400    | {"error": "OTP expired"}                         |
+| 400    | {"error": "Invalid OTP"}                         |
+| 404    | {"error": "User not found"}                      |
+| 404    | {"error": "Business not found for this user"}    |
+
+### 3) Login
+
+#### Endpoint
+
+/api/login/
+
+#### Method
+
+POST
+
+#### Auth
+
+No
+
+#### Request Body
+
+| Field    | Type   | Required | Notes                  |
+| -------- | ------ | -------- | ---------------------- |
+| email    | string | Yes      | Existing user email    |
+| password | string | Yes      | Existing user password |
+
+#### Responses
+
+| Status | Response                                                                       |
+| ------ | ------------------------------------------------------------------------------ |
+| 200    | {"message": "Login successful", "tokens": {"refresh": "...", "access": "..."}} |
+| 401    | {"error": "Invalid credentials"}                                               |
+| 404    | {"error": "User not found"}                                                    |
+
+### 4) Refresh Access Token
+
+#### Endpoint
+
+/api/token/refresh/
+
+#### Method
+
+POST
+
+#### Auth
+
+No
+
+#### Request Body
+
+| Field   | Type   | Required | Notes             |
+| ------- | ------ | -------- | ----------------- |
+| refresh | string | Yes      | JWT refresh token |
+
+#### Responses
+
+| Status | Response                                         |
+| ------ | ------------------------------------------------ |
+| 200    | {"access": "..."}                                |
+| 401    | Invalid or expired token response from SimpleJWT |
+
+### 5) Forget Password
+
+#### Endpoint
+
+/api/forget-password/
+
+#### Method
+
+POST
+
+#### Auth
+
+No
+
+#### Request Body
+
+| Field | Type   | Required | Notes      |
+| ----- | ------ | -------- | ---------- |
+| email | string | Yes      | User email |
+
+#### Responses
+
+| Status | Response                                                                     |
+| ------ | ---------------------------------------------------------------------------- |
+| 200    | {"message": "OTP sent to your email. Please verify to reset your password."} |
+| 404    | {"error": "User not found"}                                                  |
+
+### 6) Verify Forget Password OTP
+
+#### Endpoint
+
+/api/verify-forget-password-otp/
+
+#### Method
+
+POST
+
+#### Auth
+
+No
+
+#### Request Body
+
+| Field | Type   | Required | Notes          |
+| ----- | ------ | -------- | -------------- |
+| email | string | Yes      | User email     |
+| otp   | string | Yes      | OTP from email |
+
+#### Responses
+
+| Status | Response                                                  |
+| ------ | --------------------------------------------------------- |
+| 200    | {"message": "Forget Password OTP verified successfully!"} |
+| 400    | {"error": "No OTP found"}                                 |
+| 400    | {"error": "No OTP found for this user"}                   |
+| 400    | {"error": "OTP expired"}                                  |
+| 400    | {"error": "Invalid OTP"}                                  |
+| 404    | {"error": "User not found"}                               |
+
+### 7) Reset Password
+
+#### Endpoint
+
+/api/reset-password/
+
+#### Method
+
+POST
+
+#### Auth
+
+No
+
+#### Request Body
+
+| Field        | Type   | Required | Notes        |
+| ------------ | ------ | -------- | ------------ |
+| email        | string | Yes      | User email   |
+| new_password | string | Yes      | New password |
+
+#### Responses
+
+| Status | Response                                    |
+| ------ | ------------------------------------------- |
+| 200    | {"message": "Password reset successfully!"} |
+| 400    | {"error": "OTP not verified"}               |
+| 400    | {"error": "No OTP found for this user"}     |
+| 404    | {"error": "User not found"}                 |
+
+## Product Endpoints
+
+### 8) List Products / Get Product
+
+#### Endpoint
+
+/api/products/b{business_id}/
+
+#### Method
+
+GET
+
+#### Auth
+
+No (current code uses AllowAny)
+
+#### Request Body
+
+None
+
+#### Query Parameters
+
+| Param | Required | Notes                                              |
+| ----- | -------- | -------------------------------------------------- |
+| id    | No       | If provided, filters by product id within business |
+
+#### Responses
+
+| Status | Response                                |
+| ------ | --------------------------------------- |
+| 200    | Array of product objects                |
+| 400    | {"message": "Business ID is required."} |
+| 500    | {"error": "..."}                        |
+
+### 9) Create Product
+
+#### Endpoint
+
+/api/products/b{business_id}/
+
+#### Method
+
+POST
+
+#### Auth
+
+No (current code uses AllowAny, but logic depends on request.user)
+
+#### Request Body
+
+| Field        | Type    | Required | Notes                                    |
+| ------------ | ------- | -------- | ---------------------------------------- |
+| product_name | string  | Yes      | Must be unique per user by current check |
+| category     | integer | Yes      | Category id                              |
+| unit_price   | number  | Yes      | Decimal value                            |
+| quantity     | integer | Yes      | Stock quantity                           |
+| user_id      | integer | Yes      | Required by service validation           |
+| description  | string  | No       | Optional                                 |
+
+#### Responses
+
+| Status | Response                                                       |
+| ------ | -------------------------------------------------------------- |
+| 201    | {"message": "Product created successfully!", "product": {...}} |
+| 400    | {"error": "Business ID is required"}                           |
+| 400    | {"error": "You already have a product with this name."}        |
+| 500    | {"error": "Error creating product: ..."}                       |
+
+### 10) Update Product
+
+#### Endpoint
+
+/api/products/b{business_id}/
+
+#### Method
+
+PUT
+
+#### Auth
+
+No (current code uses AllowAny, but enforces product ownership by request.user)
+
+#### Request Body
+
+Partial product fields.
+
+#### Query Parameters
+
+| Param | Required | Notes      |
+| ----- | -------- | ---------- |
+| id    | Yes      | Product id |
+
+#### Responses
+
+| Status | Response                                                                 |
+| ------ | ------------------------------------------------------------------------ |
+| 200    | {"message": "Product updated successfully!", "product": {...}}           |
+| 400    | {"error": "Business ID is required"}                                     |
+| 400    | {"error": "Product ID is required"}                                      |
+| 400    | {"error": "Invalid Product ID"}                                          |
+| 404    | {"error": "Product not found or you do not have permission to edit it."} |
+
+### 11) Delete Product
+
+#### Endpoint
+
+/api/products/b{business_id}/
+
+#### Method
+
+DELETE
+
+#### Auth
+
+No (current code uses AllowAny, but enforces product ownership by request.user)
+
+#### Request Body
+
+None
+
+#### Query Parameters
+
+| Param | Required | Notes      |
+| ----- | -------- | ---------- |
+| id    | Yes      | Product id |
+
+#### Responses
+
+| Status | Response                                                                   |
+| ------ | -------------------------------------------------------------------------- |
+| 200    | {"message": "Product deleted successfully!"}                               |
+| 400    | {"error": "Business ID is required"}                                       |
+| 400    | {"error": "Product ID is required"}                                        |
+| 404    | {"error": "Product not found or you do not have permission to delete it."} |
+
+## Party Endpoints
+
+### 12) List Parties / Get Party
+
+#### Endpoint
+
+/api/parties/b{business_id}/
+
+#### Method
+
+GET
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+None
+
+#### Query Parameters
+
+| Param         | Required | Notes                                                        |
+| ------------- | -------- | ------------------------------------------------------------ |
+| id            | No       | Party id, returns single party with nested customer/supplier |
+| category_type | No       | Customer or Supplier                                         |
+| page          | No       | Paginated list page                                          |
+
+#### Responses
+
+| Status | Response                                    |
+| ------ | ------------------------------------------- |
+| 200    | Single party object or paginated party list |
+| 404    | {"error": "Party not found"}                |
+
+### 13) Create Party
+
+#### Endpoint
+
+/api/parties/b{business_id}/
+
+#### Method
+
+POST
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+| Field          | Type    | Required | Notes                      |
+| -------------- | ------- | -------- | -------------------------- |
+| Category_type  | string  | Yes      | Customer or Supplier       |
+| is_active      | boolean | No       | Default true               |
+| name           | string  | Yes      | Required for practical use |
+| email          | string  | No       | Customer duplicate check   |
+| phone_no       | string  | No       | Customer duplicate check   |
+| Customer_code  | string  | No       | Customer duplicate check   |
+| code           | string  | No       | Supplier code              |
+| address        | string  | No       | Customer only              |
+| open_balance   | number  | No       | Customer only              |
+| credit_limmit  | number  | No       | Customer only              |
+| loyalty_points | integer | No       | Customer only              |
+| referred_by    | string  | No       | Customer only              |
+| notes          | string  | No       | Customer only              |
+
+#### Responses
+
+| Status | Response                                                           |
+| ------ | ------------------------------------------------------------------ |
+| 201    | Customer or supplier created response with party and nested object |
+| 400    | {"error": "Invalid Category. Must be 'Customer' or 'Supplier'"}    |
+| 400    | Duplicate customer/supplier error with existing object             |
+
+### 14) Update Party
+
+#### Endpoint
+
+/api/parties/b{business_id}/
+
+#### Method
+
+PUT
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+Partial customer or supplier fields.
+
+#### Query Parameters
+
+| Param | Required | Notes    |
+| ----- | -------- | -------- |
+| id    | Yes      | Party id |
+
+#### Responses
+
+| Status | Response                                                                                                 |
+| ------ | -------------------------------------------------------------------------------------------------------- |
+| 200    | {"message": "Customer updated successfully!", ...} or {"message": "Supplier updated successfully!", ...} |
+| 400    | {"error": "Party ID is required"}                                                                        |
+| 400    | {"error": "No related customer or supplier found"}                                                       |
+| 404    | {"error": "Party not found"}                                                                             |
+
+### 15) Delete Party
+
+#### Endpoint
+
+/api/parties/b{business_id}/
+
+#### Method
+
+DELETE
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+None
+
+#### Query Parameters
+
+| Param | Required | Notes    |
+| ----- | -------- | -------- |
+| id    | Yes      | Party id |
+
+#### Responses
+
+| Status | Response                                   |
+| ------ | ------------------------------------------ |
+| 200    | {"message": "Party deleted successfully!"} |
+| 400    | {"error": "Party ID is required"}          |
+| 404    | {"error": "Party not found"}               |
+
+## Expense Endpoints
+
+### 16) List Expenses
+
+#### Endpoint
+
+/api/expenses/b{business_id}/
+
+#### Method
+
+GET
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+None
+
+#### Query Parameters
+
+| Param | Required | Notes               |
+| ----- | -------- | ------------------- |
+| page  | No       | Paginated list page |
+
+#### Responses
+
+| Status | Response                                           |
+| ------ | -------------------------------------------------- |
+| 200    | Paginated list of expense objects for request.user |
+
+### 17) Create Expense
+
+#### Endpoint
+
+/api/expenses/b{business_id}/
+
+#### Method
+
+POST
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+| Field        | Type    | Required | Notes                         |
+| ------------ | ------- | -------- | ----------------------------- |
+| category     | string  | Yes      | One of model category choices |
+| amount       | number  | Yes      | Decimal value                 |
+| date         | string  | Yes      | Date format YYYY-MM-DD        |
+| description  | string  | No       | Optional                      |
+| is_necessary | boolean | No       | Default true                  |
+
+#### Responses
+
+| Status | Response                                                       |
+| ------ | -------------------------------------------------------------- |
+| 201    | {"message": "Expense created successfully!", "expense": {...}} |
+| 400    | Validation errors                                              |
+
+### 18) Update Expense
+
+#### Endpoint
+
+/api/expenses/b{business_id}/
+
+#### Method
+
+PUT
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+Partial expense fields.
+
+#### Query Parameters
+
+| Param | Required | Notes      |
+| ----- | -------- | ---------- |
+| id    | Yes      | Expense id |
+
+#### Responses
+
+| Status | Response                                                                 |
+| ------ | ------------------------------------------------------------------------ |
+| 200    | {"message": "Expense updated successfully!", "expense": {...}}           |
+| 400    | {"error": "Expense ID is required"}                                      |
+| 400    | {"error": "Invalid Expense ID"}                                          |
+| 404    | {"error": "Expense not found or you do not have permission to edit it."} |
+
+### 19) Delete Expense
+
+#### Endpoint
+
+/api/expenses/b{business_id}/
+
+#### Method
+
+DELETE
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+None
+
+#### Query Parameters
+
+| Param | Required | Notes      |
+| ----- | -------- | ---------- |
+| id    | Yes      | Expense id |
+
+#### Responses
+
+| Status | Response                                                                   |
+| ------ | -------------------------------------------------------------------------- |
+| 200    | {"message": "Expense deleted successfully!"}                               |
+| 400    | {"error": "Expense ID is required"}                                        |
+| 404    | {"error": "Expense not found or you do not have permission to delete it."} |
+
+## Billing Endpoints
+
+### 20) List Billing
+
+#### Endpoint
+
+/api/billing/b{business_id}/
+
+#### Method
+
+GET
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+None
+
+#### Query Parameters
+
+| Param | Required | Notes               |
+| ----- | -------- | ------------------- |
+| page  | No       | Paginated list page |
+
+#### Responses
+
+| Status | Response                             |
+| ------ | ------------------------------------ |
+| 200    | Paginated list of billing objects    |
+| 400    | {"error": "Business ID is required"} |
+
+### 21) Create Billing
+
+#### Endpoint
+
+/api/billing/b{business_id}/
+
+#### Method
+
+POST
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+| Field          | Type    | Required | Notes                          |
+| -------------- | ------- | -------- | ------------------------------ |
+| business_id    | integer | Yes      | Must match URL business        |
+| invoice_number | string  | Yes      | Unique                         |
+| payment_method | integer | Yes      | Payment method id              |
+| invoice_status | string  | No       | Paid, Unpaid, Pending, Draft   |
+| party          | integer | No       | Party id                       |
+| invoice_date   | string  | No       | YYYY-MM-DD                     |
+| due_date       | string  | No       | YYYY-MM-DD                     |
+| total_amount   | number  | No       | Decimal                        |
+| paid_amount    | number  | No       | Decimal                        |
+| due_amount     | number  | No       | Decimal                        |
+| discount       | number  | No       | Decimal                        |
+| tax            | number  | No       | Decimal                        |
+| sub_total      | number  | No       | Decimal                        |
+| notes          | string  | No       | Optional                       |
+| items          | array   | Yes      | Must include at least one item |
+
+Billing item object fields:
+
+| Field               | Type    | Required | Notes                 |
+| ------------------- | ------- | -------- | --------------------- |
+| item                | integer | Yes      | Product id            |
+| quantity            | integer | Yes      | Item quantity         |
+| rate                | number  | Yes      | Unit rate             |
+| discount_percentage | number  | No       | Default 0             |
+| tax_percentage      | number  | No       | Default 13            |
+| total_price         | number  | Yes      | Persisted as provided |
+
+#### Responses
+
+| Status | Response                                                       |
+| ------ | -------------------------------------------------------------- |
+| 201    | {"message": "Billing created successfully!", "billing": {...}} |
+| 400    | {"error": "Business ID is required"}                           |
+| 400    | {"error": "At least one billing item is required."}            |
+| 400    | Serializer validation errors                                   |
+
+### 22) Update Billing
+
+#### Endpoint
+
+/api/billing/b{business_id}/
+
+#### Method
+
+PUT
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+Partial billing fields.
+
+#### Query Parameters
+
+| Param | Required | Notes      |
+| ----- | -------- | ---------- |
+| id    | Yes      | Billing id |
+
+#### Responses
+
+| Status | Response                                                                 |
+| ------ | ------------------------------------------------------------------------ |
+| 200    | {"message": "Billing updated successfully!", "billing": {...}}           |
+| 400    | {"error": "Business ID is required"}                                     |
+| 400    | {"error": "Billing ID is required"}                                      |
+| 400    | {"error": "Invalid Billing ID"}                                          |
+| 404    | {"error": "Billing not found or you do not have permission to edit it."} |
+
+### 23) Delete Billing
+
+#### Endpoint
+
+/api/billing/b{business_id}/
+
+#### Method
+
+DELETE
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+None
+
+#### Query Parameters
+
+| Param | Required | Notes      |
+| ----- | -------- | ---------- |
+| id    | Yes      | Billing id |
+
+#### Responses
+
+| Status | Response                                                                   |
+| ------ | -------------------------------------------------------------------------- |
+| 200    | {"message": "Billing deleted successfully!"}                               |
+| 400    | {"error": "Business ID is required"}                                       |
+| 400    | {"error": "Billing ID is required"}                                        |
+| 404    | {"error": "Billing not found or you do not have permission to delete it."} |
+
+## Employee Endpoints
+
+### 24) List Employees
+
+#### Endpoint
+
+/api/employee/b{business_id}/
+
+#### Method
+
+GET
+
+#### Auth
+
+No (current code uses AllowAny)
+
+#### Request Body
+
+None
+
+#### Responses
+
+| Status | Response                                        |
+| ------ | ----------------------------------------------- |
+| 200    | Array of employee objects                       |
+| 400    | {"error": "Business ID is required in the url"} |
+| 500    | {"error": "..."}                                |
+
+### 25) Get Employee By ID
+
+#### Endpoint
+
+/api/employee/b{business_id}/e{employee_id}/
+
+#### Method
+
+GET
+
+#### Auth
+
+No (current code uses AllowAny)
+
+#### Request Body
+
+None
+
+#### Responses
+
+| Status | Response                                        |
+| ------ | ----------------------------------------------- |
+| 200    | Employee object                                 |
+| 400    | {"error": "Business ID is required in the url"} |
+| 404    | {"error": "Employee not found"}                 |
+
+### 26) Create Employee
+
+#### Endpoint
+
+/api/employee/b{business_id}/
+
+#### Method
+
+POST
+
+#### Auth
+
+No (current code uses AllowAny)
+
+#### Request Body
+
+| Field      | Type    | Required | Notes             |
+| ---------- | ------- | -------- | ----------------- |
+| name       | string  | Yes      | Employee name     |
+| phone_no   | string  | Yes      | Employee phone    |
+| email      | string  | Yes      | Employee email    |
+| position   | string  | Yes      | Job position      |
+| salary     | number  | No       | Optional          |
+| hire_date  | string  | No       | YYYY-MM-DD        |
+| status     | integer | No       | EmployeeStatus id |
+| department | integer | No       | Department id     |
+| manager    | integer | No       | Employee id       |
+
+#### Responses
+
+| Status | Response                                                  |
+| ------ | --------------------------------------------------------- |
+| 201    | Created employee object                                   |
+| 400    | {"error": "business_id is required"} or validation errors |
+| 404    | {"error": "Business not found"}                           |
+
+### 27) Update Employee
+
+#### Endpoint
+
+/api/employee/b{business_id}/e{employee_id}/
+
+#### Method
+
+PUT
+
+#### Auth
+
+No (current code uses AllowAny)
+
+#### Request Body
+
+Partial employee fields.
+
+#### Responses
+
+| Status | Response                                                         |
+| ------ | ---------------------------------------------------------------- |
+| 200    | {"message": "Employee updated successfully", "data": {...}}      |
+| 400    | {"error": "Business ID and Employee ID are required in the url"} |
+| 404    | {"error": "Employee not found"}                                  |
+
+### 28) Delete Employee
+
+#### Endpoint
+
+/api/employee/b{business_id}/e{employee_id}/
+
+#### Method
+
+DELETE
+
+#### Auth
+
+No (current code uses AllowAny)
+
+#### Request Body
+
+None
+
+#### Responses
+
+| Status | Response                                                         |
+| ------ | ---------------------------------------------------------------- |
+| 200    | {"message": "Employee deleted successfully"}                     |
+| 400    | {"error": "Business ID and Employee ID are required in the url"} |
+| 404    | {"error": "Employee not found"}                                  |
+
+## Scheduler Endpoints
+
+### 29) Run Staff Scheduler
+
+#### Endpoint
+
+/api/scheduler/b{business_id}/
+
+#### Method
+
+POST
+
+#### Auth
+
+No (current code uses AllowAny)
+
+#### Request Body
+
+| Field              | Type      | Required | Notes                     |
+| ------------------ | --------- | -------- | ------------------------- |
+| business_id        | integer   | Yes      | Must be valid business id |
+| shift_ids          | integer[] | Yes      | Existing shift ids        |
+| max_hours_per_week | integer   | No       | Default 40                |
+| apply_schedule     | boolean   | No       | Default false             |
+| weights            | object    | No       | Float weights map         |
+
+#### Responses
+
+| Status | Response                                                                                            |
+| ------ | --------------------------------------------------------------------------------------------------- |
+| 200    | {"status": "success", "scheduling_result": {...}, "schedule_summary": {...}, "applied": true/false} |
+| 400    | Serializer errors or {"error": "No valid shifts found"}                                             |
+| 404    | {"error": "Business not found"}                                                                     |
+| 500    | {"error": "..."}                                                                                    |
+
+### 30) Get Scheduled Shifts
+
+#### Endpoint
+
+/api/scheduler/b{business_id}/
+
+#### Method
+
+GET
+
+#### Auth
+
+Effectively Yes in implementation (request.user ownership check), but class permission is AllowAny
+
+#### Request Body
+
+None
+
+#### Query Parameters
+
+| Param       | Required | Notes                          |
+| ----------- | -------- | ------------------------------ |
+| employee_id | No       | Filter by assigned employee id |
+
+#### Responses
+
+| Status | Response                             |
+| ------ | ------------------------------------ |
+| 200    | {"status": "success", "data": [...]} |
+| 400    | {"error": "business_id is required"} |
+| 403    | {"error": "Permission denied"}       |
+| 500    | {"error": "..."}                     |
+
+## Order Endpoints
+
+### 31) List Orders / Get Order
+
+#### Endpoint
+
+/api/orders/b{business_id}/
+
+#### Method
+
+GET
+
+#### Auth
+
+No (current code uses AllowAny)
+
+#### Request Body
+
+None
+
+#### Query Parameters
+
+| Param    | Required | Notes                                                                                                    |
+| -------- | -------- | -------------------------------------------------------------------------------------------------------- |
+| order_id | No       | Not wired in URL for this route; to fetch one order use route with c{value} pattern and service behavior |
+
+#### Responses
+
+| Status | Response                                        |
+| ------ | ----------------------------------------------- |
+| 200    | Array of order objects                          |
+| 400    | {"error": "Business ID is required in the url"} |
+| 500    | {"error": "..."}                                |
+
+### 32) Create Order
+
+#### Endpoint
+
+/api/orders/b{business_id}/
+
+#### Method
+
+POST
+
+#### Auth
+
+No (current code uses AllowAny)
+
+#### Request Body
+
+| Field        | Type    | Required    | Notes                                                    |
+| ------------ | ------- | ----------- | -------------------------------------------------------- |
+| total_amount | number  | Yes         | Required                                                 |
+| tax          | number  | No          | Default 0                                                |
+| discount     | number  | No          | Default 0                                                |
+| customer_id  | integer | Conditional | Required if counter_id not provided                      |
+| counter_id   | integer | Conditional | Required if customer_id not provided                     |
+| items        | array   | Conditional | Required when creating counter order without customer_id |
+
+Item object fields:
+
+| Field      | Type    | Required | Notes                    |
+| ---------- | ------- | -------- | ------------------------ |
+| product_id | integer | Yes      | Must exist               |
+| quantity   | integer | Yes      | Must be positive integer |
+| status_id  | integer | No       | OrderItemStatus id       |
+
+#### Responses
+
+| Status | Response                                                                                                      |
+| ------ | ------------------------------------------------------------------------------------------------------------- |
+| 201    | {"message": "Order created successfully.", "order": {...}, "counter_id": ..., "items_created": n}             |
+| 400    | Missing required fields, invalid numeric values, invalid product/status, invalid customer/counter combination |
+| 404    | {"error": "Business does not exist."} or customer/counter not found                                           |
+| 500    | {"error": "C0INSERR: ..."}                                                                                    |
+
+### 33) Create Order via c{value} Route
+
+#### Endpoint
+
+/api/orders/b{business_id}/c{value}/
+
+#### Method
+
+POST
+
+#### Auth
+
+No (current code uses AllowAny)
+
+#### Request Body
+
+Same as Create Order.
+
+#### Notes
+
+- Due to two identical URL patterns in router, this route binds to customer_id parameter in current Django resolution order.
+- The counter-specific route with same path shape is effectively unreachable.
+
+#### Responses
+
+Same as Create Order.
+
+### 34) Update Order
+
+#### Endpoint
+
+No direct URL currently maps order_id into OrderView.put in api.urls.
+
+#### Method
+
+PUT
+
+#### Auth
+
+No (current code uses AllowAny)
+
+#### Request Body
+
+Partial order fields.
+
+#### Notes
+
+Method exists but router currently does not provide an order_id path parameter, so this operation is not reachable through configured URLs.
+
+### 35) Delete Order
+
+#### Endpoint
+
+No direct URL currently maps order_id into OrderView.delete in api.urls.
+
+#### Method
+
+DELETE
+
+#### Auth
+
+No (current code uses AllowAny)
+
+#### Request Body
+
+None
+
+#### Notes
+
+Method exists but router currently does not provide an order_id path parameter, so this operation is not reachable through configured URLs.
+
+## Counter Endpoints
+
+### 36) List Counters / Get Counter
+
+#### Endpoint
+
+/api/counters/b{business_id}/
+
+#### Method
+
+GET
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+None
+
+#### Responses
+
+| Status | Response                                        |
+| ------ | ----------------------------------------------- |
+| 200    | Array of counters                               |
+| 400    | {"error": "Business ID is required in the url"} |
+
+### 37) Get Counter By ID
+
+#### Endpoint
+
+/api/counters/b{business_id}/c{counter_id}/
+
+#### Method
+
+GET
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+None
+
+#### Responses
+
+| Status | Response                                        |
+| ------ | ----------------------------------------------- |
+| 200    | Counter object                                  |
+| 400    | {"error": "Business ID is required in the url"} |
+| 404    | {"error": "Counter not found"}                  |
+
+### 38) Create Counter
+
+#### Endpoint
+
+/api/counters/b{business_id}/
+
+#### Method
+
+POST
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+| Field          | Type    | Required | Notes          |
+| -------------- | ------- | -------- | -------------- |
+| counter_number | integer | Yes      | Must be unique |
+| location       | string  | No       | Optional       |
+
+#### Responses
+
+| Status | Response                                                   |
+| ------ | ---------------------------------------------------------- |
+| 201    | {"message": "Counter created successfully", "data": {...}} |
+| 400    | {"error": "Business ID is required in the url"}            |
+| 400    | {"error": "counter_number is required"}                    |
+| 400    | Serializer validation errors                               |
+
+## Inventory Intelligence Endpoints
+
+### 39) Get Association Rules
+
+#### Endpoint
+
+/api/inventory/rules/b{business_id}/
+
+#### Method
+
+GET
+
+#### Auth
+
+No (current code uses AllowAny)
+
+#### Request Body
+
+None
+
+#### Responses
+
+| Status | Response                                                             |
+| ------ | -------------------------------------------------------------------- |
+| 200    | {"total_rules": n, "business": "...", "rules": [...]}                |
+| 200    | {"message": "No rules found. Trigger a retrain first.", "rules": []} |
+| 400    | {"error": "Business ID is required"}                                 |
+| 404    | {"error": "No business found for this user"}                         |
+
+### 40) Get Reorder Suggestions
+
+#### Endpoint
+
+/api/inventory/suggestions/b{business_id}/
+
+#### Method
+
+GET
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+None
+
+#### Responses
+
+| Status | Response                                                        |
+| ------ | --------------------------------------------------------------- |
+| 200    | {"business": "...", "low_stock_count": n, "suggestions": [...]} |
+| 200    | {"message": "No low stock items found.", "suggestions": []}     |
+| 400    | {"error": "Business ID is required"} or Apriori error           |
+| 404    | {"error": "No business found for this user"}                    |
+
+### 41) Get Stock Alerts
+
+#### Endpoint
+
+/api/inventory/alerts/b{business_id}/
+
+#### Method
+
+GET
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+None
+
+#### Query Parameters
+
+| Param    | Required | Notes                        |
+| -------- | -------- | ---------------------------- |
+| resolved | No       | true or false, default false |
+
+#### Responses
+
+| Status | Response                                                    |
+| ------ | ----------------------------------------------------------- | ----------------------------- |
+| 200    | {"business": "...", "total_alerts": n, "showing": "resolved | unresolved", "alerts": [...]} |
+| 400    | {"error": "Business ID is required"}                        |
+| 404    | {"error": "No business found for this user"}                |
+
+### 42) Resolve Stock Alert
+
+#### Endpoint
+
+/api/inventory/alerts/b{business_id}/{alert_id}/resolve/
+
+#### Method
+
+PUT
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+None
+
+#### Responses
+
+| Status | Response                                                                                                  |
+| ------ | --------------------------------------------------------------------------------------------------------- |
+| 200    | {"message": "Alert #<id> resolved successfully", "alert_id": <id>, "product": "...", "is_resolved": true} |
+| 400    | {"error": "Business ID is required"}                                                                      |
+| 404    | {"error": "No business found for this user"}                                                              |
+| 404    | {"error": "Alert #<id> not found"}                                                                        |
+
+### 43) Retrain Apriori Model
+
+#### Endpoint
+
+/api/inventory/retrain/b{business_id}/
+
+#### Method
+
+POST
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+None
+
+#### Responses
+
+| Status | Response                                                                                                                                                                   |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 200    | {"message": "Retrain completed successfully", "business": "...", "rules_found": "...", "rules_saved": n, "old_rules_deleted": n, "alerts_created": n, "alerts_skipped": n} |
+| 400    | {"error": "Business ID is required"} or retrain error                                                                                                                      |
+| 404    | {"error": "No business found for this user"}                                                                                                                               |
+
+## Cart Endpoints
+
+These routes are mounted at project URL level and still use /api prefix.
+
+### 44) Get Cart Items (Customer Scope)
+
+#### Endpoint
+
+/api/cart/business/{business_id}/customer/{customer_id}/
+
+#### Method
+
+GET
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+None
+
+#### Responses
+
+| Status | Response                                        |
+| ------ | ----------------------------------------------- |
+| 200    | Array of cart item objects                      |
+| 400    | {"error": "Business ID is required in the url"} |
+| 400    | {"error": "Customer ID is required in the url"} |
+| 404    | {"error": "Customer does not exist"}            |
+| 500    | {"error": "..."}                                |
+
+### 45) Add Items To Cart (Customer Scope)
+
+#### Endpoint
+
+/api/cart/business/{business_id}/customer/{customer_id}/
+
+#### Method
+
+POST
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+Array of item objects.
+
+| Field      | Type    | Required | Notes                                                  |
+| ---------- | ------- | -------- | ------------------------------------------------------ |
+| unit_price | number  | Yes      | Required per item                                      |
+| quantity   | number  | Yes      | Required per item                                      |
+| Product_id | integer | Yes      | Product id key is Product_id in current implementation |
+
+#### Responses
+
+| Status | Response                                                     |
+| ------ | ------------------------------------------------------------ |
+| 201    | {"message": "Items added to cart successfully", "data": ...} |
+| 400    | {"error": "Invalid data format. Expected a list of items."}  |
+| 400    | Missing required per-item field error                        |
+| 404    | {"error": "Customer does not exist"}                         |
+| 404    | {"error": "Product with ID <id> does not exist."}            |
+| 500    | {"error": "..."}                                             |
+
+### 46) Cart Routes with Incomplete URL Parameters
+
+#### Endpoint
+
+/api/cart/
+
+#### Method
+
+GET, POST
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+Depends on method.
+
+#### Responses
+
+| Status | Response                                        |
+| ------ | ----------------------------------------------- |
+| 400    | {"error": "Business ID is required in the url"} |
+
+#### Notes
+
+This route is mapped but view logic requires business_id and customer_id, so it always returns validation errors.
+
+### 47) Delete Cart Item
+
+#### Endpoint
+
+No URL currently provides cart_id to OrderCartView.delete.
+
+#### Method
+
+DELETE
+
+#### Auth
+
+Yes
+
+#### Request Body
+
+None
+
+#### Notes
+
+Delete method exists but configured URLs do not pass cart_id, so this operation is currently unreachable.
+
+## Operational Notes
+
+### Celery Worker
+
+- Command: celery -A backend worker --loglevel=info --pool=solo
+
+### Runtime Requirements
+
+- Install dependencies from requirements.txt
+- Redis-compatible broker required for Celery task queue (for example Memurai on Windows)
+
+## Important Current Router/Permission Caveats
+
+- Several write endpoints are marked AllowAny in code, even where business logic assumes authenticated users.
+- Order routes include two identical c{int} patterns, so only the first one resolves in Django.
+- Some view methods exist for update/delete but do not have matching URL patterns with required path parameters.
