@@ -8,7 +8,7 @@ celery==5.6.3
 certifi==2025.11.12
 cffi==2.0.0
 charset-normalizer==3.4.4
-click>=8.0,<8.2
+click==8.1.8
 click-didyoumean==0.3.1
 click-plugins==1.1.1.2
 click-repl==0.3.0
@@ -18,7 +18,7 @@ cron-descriptor==1.4.5
 cryptography==46.0.3
 cssselect2==0.8.0
 cycler==0.12.1
-Django==6.0
+Django==5.2
 django-cors-headers==4.9.0
 django-extensions==4.1
 django-picklefield==3.4.0
@@ -85,3 +85,5 @@ waitress==3.0.2
 wcwidth==0.2.14
 webencodings==0.5.1
 xhtml2pdf==0.2.17
+daphne==4.1.2
+channels==4.2.2
