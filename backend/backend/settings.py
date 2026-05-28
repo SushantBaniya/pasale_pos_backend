@@ -157,6 +157,7 @@ CORS_ALLOW_HEADERS = [
     'authorization',
     'content-type',
     'accept',
+    "https://your-app.vercel.app",
 ]
 
 # Password validation
