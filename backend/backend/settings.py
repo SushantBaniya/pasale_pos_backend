@@ -157,7 +157,7 @@ CORS_ALLOW_HEADERS = [
     'authorization',
     'content-type',
     'accept',
-    "https://your-app.vercel.app",
+    "https://pasale-pos-frontend.vercel.app",
 ]
 
 # Password validation
