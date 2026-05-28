@@ -157,7 +157,6 @@ CORS_ALLOW_HEADERS = [
     'authorization',
     'content-type',
     'accept',
-    "https://pasale-pos-frontend.vercel.app",
 ]
 
 # Password validation
@@ -205,12 +204,15 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-CORS_ALLOW_ALL_ORIGINS = config(
-    'CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
-CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://127.0.0.1:5174',
-).split(',')
+CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+    "https://pasale-pos-frontend.vercel.app",
+]
 CORS_ALLOW_CREDENTIALS = True
 
 # Email settings
