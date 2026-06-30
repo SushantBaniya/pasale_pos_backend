@@ -36,7 +36,7 @@ class BusinessSummaryView(APIView):
             current_month = now.month
             current_year = now.year
 
-            # ── Party Balances (To Receive / To Give) ──
+            # Party Balances (To Receive / To Give) 
             party_totals = Party.objects.filter(business_id=business_id).aggregate(
                 to_receive=Sum(
                     'open_balance',
@@ -51,7 +51,7 @@ class BusinessSummaryView(APIView):
             to_receive = party_totals.get('to_receive') or Decimal('0.00')
             to_give = party_totals.get('to_give') or Decimal('0.00')
 
-            # ── Billing-based Sales & Purchase (current month) ──
+            # Billing-based Sales & Purchase (current month) 
             billings = Billing.objects.filter(business_id=business_id)
 
             monthly_totals = billings.filter(
@@ -73,7 +73,7 @@ class BusinessSummaryView(APIView):
             monthly_purchase = monthly_totals.get(
                 'monthly_purchase') or Decimal('0.00')
 
-            # ── Inventory Value ──
+            # Inventory Value
             products = Product.objects.filter(business_id=business_id)
             inventory_value = products.aggregate(
                 total=Sum(
@@ -85,7 +85,7 @@ class BusinessSummaryView(APIView):
                 )
             )['total'] or Decimal('0.00')
 
-            # ── Cashflow Trends (last 7 days) ──
+            # Cashflow Trends (last 7 days) ──
             seven_days_ago = now.date() - timedelta(days=6)
 
             daily_cashflow = billings.filter(
@@ -120,7 +120,7 @@ class BusinessSummaryView(APIView):
                     'outflow': totals['outflow'],
                 })
 
-            # ── Weekly cashflow (last 4 weeks) ──
+            # Weekly cashflow (last 4 weeks) 
             four_weeks_ago = now.date() - timedelta(weeks=4)
             weekly_cashflow = billings.filter(
                 invoice_date__gte=four_weeks_ago
@@ -153,7 +153,7 @@ class BusinessSummaryView(APIView):
                     'outflow': totals['outflow'],
                 })
 
-            # ── Monthly cashflow (last 6 months) ──
+            # Monthly cashflow (last 6 months)
             month_starts = []
             for i in range(6):
                 month_offset = 5 - i
@@ -219,7 +219,7 @@ class BusinessSummaryView(APIView):
                     pass
                 return Response(dashboard_payload, status=status.HTTP_200_OK)
 
-            # ── Sales Summary from Orders (legacy) ──
+            # Sales Summary from Orders (legacy)
             orders = Order.objects.filter(business_id=business_id)
             if start_date_str:
                 orders = orders.filter(created_at__date__gte=start_date_str)
