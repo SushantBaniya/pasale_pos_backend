@@ -23,5 +23,15 @@ services:
       - redis_data:/data
     command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
 
+  celery:
+    build: . # uses docker file to build the image
+    container_name: pasale_celery
+    restart: always
+    command: celery -A backend worker -l info
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
 volumes:
   redis_data:
