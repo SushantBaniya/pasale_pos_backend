@@ -369,7 +369,14 @@ class LoginView(APIView):
         return Response({
             'message': 'Login successful',
             'tokens': tokens,
-            'business_id': business.id
+            'business_id': business.id,
+            'user': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+            },
         }, status=status.HTTP_200_OK)
 
 
