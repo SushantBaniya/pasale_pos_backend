@@ -1318,7 +1318,7 @@ class OrderView(APIView):
 
 
 class CounterView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, business_id=None, counter_id=None):
         try:
