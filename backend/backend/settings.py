@@ -72,6 +72,8 @@ INSTALLED_APPS = [
     'api',
     'orderCart',
     'drf_spectacular',
+    'cloudinary',
+    'cloudinary_storage',
 
     'django_q',
 ]
@@ -251,3 +253,18 @@ Q_CLUSTER = {
     'orm': 'default',       # uses your existing Django DB, no Redis needed
 }
 
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': config('CLOUDINARY_API_KEY'),
+    'API_SECRET': config('CLOUDINARY_API_SECRET'),
+}
+
+# For Django 4.2 and 5.x:
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
+}
