@@ -47,6 +47,8 @@ class OrderItemStatus(models.Model):
         return self.name
 
 
+
+
 class Business(models.Model):
     id = models.AutoField(primary_key=True)
     user = models.ForeignKey(
@@ -148,8 +150,10 @@ class Product(models.Model):
     reorder_level = models.PositiveIntegerField(default=10)
     is_low_stock = models.BooleanField(default=False)
     description = models.TextField(blank=True, null=True)
-    product_Img = models.ImageField(
-        upload_to='products/', null=True, blank=True)
+
+    image_url = models.URLField(blank=True, null=True)
+    image_public_id = models.CharField(max_length=255, blank=True, null=True)
+    
     is_created_at = models.DateTimeField(auto_now_add=True, null=True)
     is_updated_at = models.DateTimeField(auto_now=True)
 

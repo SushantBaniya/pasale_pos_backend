@@ -376,7 +376,7 @@ class LoginView(APIView):
 class ApiProductView(APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request, business_id=None, product_id=None, **kwargs):
+    def get(self, request, business_id=None, product_id=None):
         product_id = product_id or request.query_params.get('id')
         business_id = business_id or request.query_params.get('business_id')
 
@@ -1821,3 +1821,119 @@ class ReminderView(APIView):
             return Response({'status': 'success', 'message': 'Reminder deleted'})
         except Reminder.DoesNotExist:
             return Response({'error': 'Reminder not found'}, status=status.HTTP_404_NOT_FOUND)
+
+from rest_framework.parsers import MultiPartParser, FormParser
+
+from api.services.claudinary_service import upload_product_image, delete_product_image
+
+
+class ProductImageView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    parser_classes = [
+        MultiPartParser,
+        FormParser
+    ]
+
+    def post(self, request, product_id):
+
+        data = request.data.copy()
+        
+        product = self.get_product(request, product_id)
+
+        image = request.FILES.get("image")
+
+        if not image:
+            return Response(
+                {"error": "Image is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        old_public_id = product.image_public_id
+
+        try:
+            uploaded = upload_product_image(
+                image,
+                product.business_id
+            )
+
+            with transaction.atomic():
+
+                product.image_url = uploaded["image_url"]
+
+                product.image_public_id = (
+                    uploaded["image_public_id"]
+                )
+
+                product.save(
+                    update_fields=[
+                        "image_url",
+                        "image_public_id"
+                    ]
+                )
+
+        except Exception:
+            # Remove the newly uploaded asset if the
+            # database update fails.
+            if "uploaded" in locals():
+                try:
+                    delete_product_image(
+                        uploaded["image_public_id"]
+                    )
+                except Exception:
+                    pass
+
+            raise
+
+        # Delete old image only after the new URL
+        # has been saved successfully.
+        if old_public_id:
+            try:
+                delete_product_image(old_public_id)
+            except Exception:
+                # Log the failure and retry cleanup later.
+                pass
+
+        return Response(
+            {
+                "message": "Product image uploaded successfully.",
+                "image_url": product.image_url,
+                "image_public_id": product.image_public_id
+            },
+            status=status.HTTP_200_OK
+        )
+
+    def delete(self, request, pk):
+
+        product = self.get_product(request, pk)
+
+        if not product.image_public_id:
+            return Response(
+                {"message": "Product has no image."},
+                status=status.HTTP_200_OK
+            )
+
+        public_id = product.image_public_id
+
+        # Clear DB reference first.
+        product.image_url = None
+        product.image_public_id = None
+
+        product.save(
+            update_fields=[
+                "image_url",
+                "image_public_id"
+            ]
+        )
+
+        try:
+            delete_product_image(public_id)
+        except Exception:
+            # Log and retry cleanup later.
+            pass
+
+        return Response(
+            {"message": "Product image deleted successfully."},
+            status=status.HTTP_200_OK
+        )

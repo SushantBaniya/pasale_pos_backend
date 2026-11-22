@@ -1,5 +1,5 @@
 from django.urls import path
-from api.views import ReminderView, CounterView, EmployeeView, OrderView, ManualAssignView, OrderStatusView, SignupView, VerifySignupOtpView, ApiProductView, LoginView, ApiPartyView, ApiPaymentTransactionView, ApiExpenseView, ApiBillingView, ForgetPasswordView,VerifyForgetPasswordOtpView, ResetPasswordView, StaffSchedulerView, AssociationRulesView, ReorderSuggestionsView, StockAlertsView, ResolveAlertView, RetrainAprioriView, DepartmentView, SkillView, EmployeeSkillView, ShiftCRUDView
+from api.views import ProductImageView, ReminderView, CounterView, EmployeeView, OrderView, ManualAssignView, OrderStatusView, SignupView, VerifySignupOtpView, ApiProductView, LoginView, ApiPartyView, ApiPaymentTransactionView, ApiExpenseView, ApiBillingView, ForgetPasswordView,VerifyForgetPasswordOtpView, ResetPasswordView, StaffSchedulerView, AssociationRulesView, ReorderSuggestionsView, StockAlertsView, ResolveAlertView, RetrainAprioriView, DepartmentView, SkillView, EmployeeSkillView, ShiftCRUDView
 from api.views_reports import BusinessSummaryView
 from rest_framework_simplejwt.views import TokenRefreshView
 
@@ -121,9 +121,15 @@ urlpatterns = [
         ManualAssignView.as_view(),
         name='manual-assign'
     ),
+
+    path('products/p<int:product_id>/image/', 
+         ProductImageView.as_view(), name='check-image'),
     
     path('reminders/b<int:business_id>/', 
          ReminderView.as_view(), name='reminder-list-create'),
     path('reminders/b<int:business_id>/r<int:reminder_id>/', 
          ReminderView.as_view(), name='reminder-detail'),
+
+     
+
 ]
