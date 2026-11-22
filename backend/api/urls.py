@@ -129,7 +129,4 @@ urlpatterns = [
          ReminderView.as_view(), name='reminder-list-create'),
     path('reminders/b<int:business_id>/r<int:reminder_id>/', 
          ReminderView.as_view(), name='reminder-detail'),
-
-     
-
 ]

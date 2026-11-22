@@ -17,6 +17,8 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+        image_url = serializers.URLField(required=False, allow_null=True, read_only=True)
+        image_public_id = serializers.CharField(required=False, allow_null=True, read_only=True)
 
 
 class PartySerializer(serializers.ModelSerializer):

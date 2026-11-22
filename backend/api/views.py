@@ -1825,11 +1825,12 @@ class ReminderView(APIView):
 from rest_framework.parsers import MultiPartParser, FormParser
 
 from api.services.claudinary_service import upload_product_image, delete_product_image
+from api.services.productService import get_product
 
 
 class ProductImageView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     parser_classes = [
         MultiPartParser,
@@ -1837,25 +1838,50 @@ class ProductImageView(APIView):
     ]
 
     def post(self, request, product_id):
-
-        data = request.data.copy()
-        
-        product = self.get_product(request, product_id)
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            logger.warning(
+                "Product image upload requested for missing product_id=%s",
+                product_id,
+            )
+            return Response(
+                {"error": "Product not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         image = request.FILES.get("image")
 
         if not image:
+            logger.warning(
+                "Product image upload missing 'image' for product_id=%s",
+                product_id,
+            )
             return Response(
                 {"error": "Image is required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        logger.info(
+            "Uploading product image: product_id=%s, business_id=%s, "
+            "filename=%s, size=%s",
+            product_id,
+            product.business_id_id,
+            image.name,
+            image.size,
+        )
 
         old_public_id = product.image_public_id
 
         try:
             uploaded = upload_product_image(
                 image,
-                product.business_id
+                product.business_id_id
+            )
+            logger.info(
+                "Cloudinary upload completed for product_id=%s, public_id=%s",
+                product_id,
+                uploaded["image_public_id"],
             )
 
             with transaction.atomic():
@@ -1873,7 +1899,11 @@ class ProductImageView(APIView):
                     ]
                 )
 
-        except Exception:
+        except Exception as exc:
+            logger.exception(
+                "Product image upload failed for product_id=%s",
+                product_id,
+            )
             # Remove the newly uploaded asset if the
             # database update fails.
             if "uploaded" in locals():
@@ -1882,7 +1912,12 @@ class ProductImageView(APIView):
                         uploaded["image_public_id"]
                     )
                 except Exception:
-                    pass
+                    logger.exception(
+                        "Failed to delete uploaded image after database failure "
+                        "for product_id=%s, public_id=%s",
+                        product_id,
+                        uploaded["image_public_id"],
+                    )
 
             raise
 
@@ -1893,7 +1928,18 @@ class ProductImageView(APIView):
                 delete_product_image(old_public_id)
             except Exception:
                 # Log the failure and retry cleanup later.
-                pass
+                logger.exception(
+                    "Failed to delete old product image for product_id=%s, "
+                    "public_id=%s",
+                    product_id,
+                    old_public_id,
+                )
+
+        logger.info(
+            "Product image saved successfully for product_id=%s, public_id=%s",
+            product_id,
+            product.image_public_id,
+        )
 
         return Response(
             {
@@ -1904,11 +1950,24 @@ class ProductImageView(APIView):
             status=status.HTTP_200_OK
         )
 
-    def delete(self, request, pk):
-
-        product = self.get_product(request, pk)
+    def delete(self, request, product_id):
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            logger.warning(
+                "Product image deletion requested for missing product_id=%s",
+                product_id,
+            )
+            return Response(
+                {"error": "Product not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         if not product.image_public_id:
+            logger.info(
+                "Product image deletion skipped: no image for product_id=%s",
+                product_id,
+            )
             return Response(
                 {"message": "Product has no image."},
                 status=status.HTTP_200_OK
@@ -1931,8 +1990,17 @@ class ProductImageView(APIView):
             delete_product_image(public_id)
         except Exception:
             # Log and retry cleanup later.
-            pass
+            logger.exception(
+                "Failed to delete Cloudinary image for product_id=%s, "
+                "public_id=%s",
+                product_id,
+                public_id,
+            )
 
+        logger.info(
+            "Product image deleted successfully for product_id=%s",
+            product_id,
+        )
         return Response(
             {"message": "Product image deleted successfully."},
             status=status.HTTP_200_OK
