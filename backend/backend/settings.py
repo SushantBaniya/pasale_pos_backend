@@ -15,6 +15,7 @@ from pathlib import Path
 from datetime import timedelta
 from dotenv import load_dotenv
 from decouple import config
+import cloudinary
 
 import os
 
@@ -258,6 +259,12 @@ CLOUDINARY_STORAGE = {
     'API_KEY': config('CLOUDINARY_API_KEY', default=''),
     'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
 }
+
+cloudinary.config(
+    cloud_name=CLOUDINARY_STORAGE['CLOUD_NAME'],
+    api_key=CLOUDINARY_STORAGE['API_KEY'],
+    api_secret=CLOUDINARY_STORAGE['API_SECRET'],
+)
 
 STORAGES = {
     "default": {

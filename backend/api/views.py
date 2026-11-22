@@ -21,6 +21,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.exceptions import ValidationError
 from django.core.mail import send_mail
 import random
 from .models import Business, Counter, Customer, Department, Employee, ForgetPasswordOTP, Party, Product, StockAlert, Supplier, Expense, Billing, BillingItem, Shift, Order, OrderStatus, AprioriRule, EmployeeSchedule, Skill, EmployeeSkill, PaymentMethod
@@ -1919,7 +1920,19 @@ class ProductImageView(APIView):
                         uploaded["image_public_id"],
                     )
 
-            raise
+            if isinstance(exc, ValidationError):
+                return Response(
+                    {"error": exc.detail},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            return Response(
+                {
+                    "error": "Image upload failed.",
+                    "detail": "The image could not be uploaded to the image provider.",
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
 
         # Delete old image only after the new URL
         # has been saved successfully.
